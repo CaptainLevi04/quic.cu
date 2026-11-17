@@ -33,3 +33,6 @@ logs/
 *.swo
 *~
 .DS_Store
+
+# Reference PDF reports
+*.pdf
