@@ -7,67 +7,218 @@
 
 ---
 
-# Optimizing Qwen 2.5 0.5B Inference on NVIDIA GPUs: Beating Hugging Face with Bare-Metal CUDA
+﻿<!DOCTYPE html><html dir="ltr" lang="en" class="scroll-smooth"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="canonical" href="https://hdahroug.github.io/optimizing-qwen2.5-0.5b-cuda/"><meta name="generator" content="Astro v5.16.6"><!-- Load Font --><style>@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/eac50eb620c54c10.woff2") format("woff2");font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-weight:300;font-style:italic;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/eac50eb620c54c10.woff2") format("woff2");font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-weight:400;font-style:italic;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/eac50eb620c54c10.woff2") format("woff2");font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-weight:500;font-style:italic;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/eac50eb620c54c10.woff2") format("woff2");font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-weight:600;font-style:italic;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/eac50eb620c54c10.woff2") format("woff2");font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-weight:700;font-style:italic;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/408661687ee6f3ed.woff2") format("woff2");font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-weight:300;font-style:normal;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/408661687ee6f3ed.woff2") format("woff2");font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-weight:400;font-style:normal;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/408661687ee6f3ed.woff2") format("woff2");font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-weight:500;font-style:normal;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/408661687ee6f3ed.woff2") format("woff2");font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-weight:600;font-style:normal;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/408661687ee6f3ed.woff2") format("woff2");font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-weight:700;font-style:normal;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/2213c1e7fbe06cc7.woff") format("woff");font-display:swap;font-weight:300;font-style:italic;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/c487dbd9c215141e.woff") format("woff");font-display:swap;font-weight:400;font-style:italic;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/0976c79a1e97c08d.woff") format("woff");font-display:swap;font-weight:500;font-style:italic;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/3c46d5a1dde2929d.woff") format("woff");font-display:swap;font-weight:600;font-style:italic;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/e9aa617e80052f4b.woff") format("woff");font-display:swap;font-weight:700;font-style:italic;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/5056f1a50e5e7744.woff") format("woff");font-display:swap;font-weight:300;font-style:normal;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/e734307f8c328338.woff") format("woff");font-display:swap;font-weight:400;font-style:normal;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/dfa89044152f7da4.woff") format("woff");font-display:swap;font-weight:500;font-style:normal;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/8bbd58b325585200.woff") format("woff");font-display:swap;font-weight:600;font-style:normal;}@font-face{font-family:"Google Sans Code-04a186ad63205992";src:url("/_astro/fonts/035035a9ddbd14aa.woff") format("woff");font-display:swap;font-weight:700;font-style:normal;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:300;font-style:italic;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:400;font-style:italic;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:500;font-style:italic;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:600;font-style:italic;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:700;font-style:italic;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:300;font-style:normal;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:400;font-style:normal;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:500;font-style:normal;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:600;font-style:normal;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:700;font-style:normal;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:300;font-style:italic;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:400;font-style:italic;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:500;font-style:italic;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:600;font-style:italic;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:700;font-style:italic;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:300;font-style:normal;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:400;font-style:normal;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:500;font-style:normal;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:600;font-style:normal;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}@font-face{font-family:"Google Sans Code-04a186ad63205992 fallback: Courier New";src:local("Courier New");font-display:swap;font-weight:700;font-style:normal;size-adjust:99.9837%;ascent-override:96.6157%;descent-override:28.6047%;}:root{--font-google-sans-code:"Google Sans Code-04a186ad63205992","Google Sans Code-04a186ad63205992 fallback: Courier New",monospace;}</style><style>@font-face{font-family:"PT Serif-c1b3c5e980df12c5";src:url("/_astro/fonts/573727ed382a8c73.woff2") format("woff2");font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-weight:400;font-style:italic;}@font-face{font-family:"PT Serif-c1b3c5e980df12c5";src:url("/_astro/fonts/50609c4acdbbc958.woff2") format("woff2");font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-weight:700;font-style:italic;}@font-face{font-family:"PT Serif-c1b3c5e980df12c5";src:url("/_astro/fonts/e5e178ad67270bfe.woff2") format("woff2");font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-weight:400;font-style:normal;}@font-face{font-family:"PT Serif-c1b3c5e980df12c5";src:url("/_astro/fonts/062c04dbe0fef904.woff2") format("woff2");font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-weight:700;font-style:normal;}@font-face{font-family:"PT Serif-c1b3c5e980df12c5";src:url("/_astro/fonts/c3bdaf2f9a49cf21.woff") format("woff");font-display:swap;font-weight:400;font-style:italic;}@font-face{font-family:"PT Serif-c1b3c5e980df12c5";src:url("/_astro/fonts/85dc22427f88c577.woff") format("woff");font-display:swap;font-weight:700;font-style:italic;}@font-face{font-family:"PT Serif-c1b3c5e980df12c5";src:url("/_astro/fonts/604df18af53afdb9.woff") format("woff");font-display:swap;font-weight:400;font-style:normal;}@font-face{font-family:"PT Serif-c1b3c5e980df12c5";src:url("/_astro/fonts/ae06223db35f1ada.woff") format("woff");font-display:swap;font-weight:700;font-style:normal;}@font-face{font-family:"PT Serif-c1b3c5e980df12c5 fallback: Times New Roman";src:local("Times New Roman");font-display:swap;font-weight:400;font-style:italic;size-adjust:104.8615%;ascent-override:99.083%;descent-override:27.2741%;line-gap-override:0%;}@font-face{font-family:"PT Serif-c1b3c5e980df12c5 fallback: Times New Roman";src:local("Times New Roman");font-display:swap;font-weight:700;font-style:italic;size-adjust:104.8615%;ascent-override:99.083%;descent-override:27.2741%;line-gap-override:0%;}@font-face{font-family:"PT Serif-c1b3c5e980df12c5 fallback: Times New Roman";src:local("Times New Roman");font-display:swap;font-weight:400;font-style:normal;size-adjust:104.8615%;ascent-override:99.083%;descent-override:27.2741%;line-gap-override:0%;}@font-face{font-family:"PT Serif-c1b3c5e980df12c5 fallback: Times New Roman";src:local("Times New Roman");font-display:swap;font-weight:700;font-style:normal;size-adjust:104.8615%;ascent-override:99.083%;descent-override:27.2741%;line-gap-override:0%;}@font-face{font-family:"PT Serif-c1b3c5e980df12c5 fallback: Times New Roman";src:local("Times New Roman");font-display:swap;font-weight:400;font-style:italic;size-adjust:104.8615%;ascent-override:99.083%;descent-override:27.2741%;line-gap-override:0%;}@font-face{font-family:"PT Serif-c1b3c5e980df12c5 fallback: Times New Roman";src:local("Times New Roman");font-display:swap;font-weight:700;font-style:italic;size-adjust:104.8615%;ascent-override:99.083%;descent-override:27.2741%;line-gap-override:0%;}@font-face{font-family:"PT Serif-c1b3c5e980df12c5 fallback: Times New Roman";src:local("Times New Roman");font-display:swap;font-weight:400;font-style:normal;size-adjust:104.8615%;ascent-override:99.083%;descent-override:27.2741%;line-gap-override:0%;}@font-face{font-family:"PT Serif-c1b3c5e980df12c5 fallback: Times New Roman";src:local("Times New Roman");font-display:swap;font-weight:700;font-style:normal;size-adjust:104.8615%;ascent-override:99.083%;descent-override:27.2741%;line-gap-override:0%;}:root{--font-pt-serif:"PT Serif-c1b3c5e980df12c5","PT Serif-c1b3c5e980df12c5 fallback: Times New Roman",serif;}</style><link rel="preload" href="/_astro/fonts/e5e178ad67270bfe.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/_astro/fonts/062c04dbe0fef904.woff2" as="font" type="font/woff2" crossorigin><!-- General Meta Tags --><title>Optimizing Qwen 2.5 0.5B Inference on NVIDIA GPUs: Beating Hugging Face with Bare-Metal CUDA | Amr Gamal</title><meta name="title" content="Optimizing Qwen 2.5 0.5B Inference on NVIDIA GPUs: Beating Hugging Face with Bare-Metal CUDA | Hassan Dahroug"><meta name="description" content="Building QUIC, a bare-metal CUDA serving engine for Qwen 2.5 0.5B from scratch, achieving up to 2.62x higher decode throughput over Hugging Face FP16 on an NVIDIA H100."><meta name="author" content="Dahroug"><link rel="sitemap" href="/sitemap-index.xml"><!-- Open Graph / Facebook --><meta property="og:title" content="Optimizing Qwen 2.5 0.5B Inference on NVIDIA GPUs: Beating Hugging Face with Bare-Metal CUDA | Hassan Dahroug"><meta property="og:description" content="Building QUIC, a bare-metal CUDA serving engine for Qwen 2.5 0.5B from scratch, achieving up to 2.62x higher decode throughput over Hugging Face FP16 on an NVIDIA H100."><meta property="og:url" content="https://hdahroug.github.io/optimizing-qwen2.5-0.5b-cuda/"><meta property="og:image" content="https://hdahroug.github.io/optimizing-qwen2.5-0.5b-cuda/index.png"><!-- Article Published/Modified time --><meta property="article:published_time" content="2026-10-23T23:25:00.000Z"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://hdahroug.github.io/optimizing-qwen2.5-0.5b-cuda/"><meta property="twitter:title" content="Optimizing Qwen 2.5 0.5B Inference on NVIDIA GPUs: Beating Hugging Face with Bare-Metal CUDA | Hassan Dahroug"><meta property="twitter:description" content="Building QUIC, a bare-metal CUDA serving engine for Qwen 2.5 0.5B from scratch, achieving up to 2.62x higher decode throughput over Hugging Face FP16 on an NVIDIA H100."><meta property="twitter:image" content="https://hdahroug.github.io/optimizing-qwen2.5-0.5b-cuda/index.png"><!-- Google JSON-LD Structured data --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"Optimizing Qwen 2.5 0.5B Inference on NVIDIA GPUs: Beating Hugging Face with Bare-Metal CUDA | Hassan Dahroug","image":"https://hdahroug.github.io/optimizing-qwen2.5-0.5b-cuda/index.png","datePublished":"2026-10-23T23:25:00.000Z","author":[{"@type":"Person","name":"Dahroug","url":"https://hdahroug.github.io/"}]}</script><!-- Enable RSS feed auto-discovery  --><!-- https://docs.astro.build/en/recipes/rss/#enabling-rss-feed-auto-discovery --><link rel="alternate" type="application/rss+xml" title="Hassan Dahroug" href="https://hdahroug.github.io/rss.xml"><meta name="theme-color" content=""><meta name="google-site-verification" content="Ap5bb66JIeOrmzMQt4h9akaR9l0GoOiwcrxrHPknm58"><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/_astro/ClientRouter.astro_astro_type_script_index_0_lang.QW52Ox2j.js"></script><!-- Minimal inline script to prevent FOUC - sets theme immediately --><script>
+      (function () {
+        const initialColorScheme = ""; // "light" | "dark"
+        const currentTheme = localStorage.getItem("theme");
 
-        
-        
-          
-            AG
-            Amr Gamal
-            [(@CaptainLevi04)](https://github.com/CaptainLevi04)
-          
-          •
-          November 2026
-          •
-          Graduation Project Deep-Dive
-        
+        function getPreferTheme() {
+          if (currentTheme) return currentTheme;
+          if (initialColorScheme) return initialColorScheme;
+          return window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+        }
 
-        
-  ⚡ TL;DR
+        const themeValue = getPreferTheme();
 
-  The full code, custom CUDA kernels, and benchmarks are open-source on GitHub at [CaptainLevi04/quic.cu](https://github.com/CaptainLevi04/quic.cu). The pre-quantized 4-bit model checkpoint is published on Hugging Face at [Amr04/Qwen2.5-0.5B-AWQ-W4A16](https://huggingface.co/Amr04/Qwen2.5-0.5B-AWQ-W4A16-tied-embed-asym-hq128).
+        // Set theme immediately to prevent flash
+        document.firstElementChild?.setAttribute("data-theme", themeValue);
 
-After spending months deep in the trenches of GPU programming and transformer inference, our team wanted to understand what actually happens when you chain together dozens of disparate operations into a production-grade LLM serving engine. Frameworks like Hugging Face are invaluable for rapid research, but when you open an NVIDIA Nsight Systems or PyTorch Profiler trace, you witness thousands of micro-kernel launches, severe memory bandwidth thrashing, and massive GPU idle bubbles.
+        // Export minimal API for external script
+        window.theme = {
+          themeValue: themeValue,
+          getTheme: () => window.theme.themeValue,
+          setTheme: val => {
+            window.theme.themeValue = val;
+          },
+        };
+      })();
+    </script><style>:where([data-astro-image]){object-fit:var(--fit);object-position:var(--pos);height:auto}:where([data-astro-image=full-width]){width:100%}:where([data-astro-image=constrained]){max-width:100%}
+</style>
+<link rel="stylesheet" href="style.css">
+<style>@keyframes astroFadeInOut{0%{opacity:1}to{opacity:0}}@keyframes astroFadeIn{0%{opacity:0;mix-blend-mode:plus-lighter}to{opacity:1;mix-blend-mode:plus-lighter}}@keyframes astroFadeOut{0%{opacity:1;mix-blend-mode:plus-lighter}to{opacity:0;mix-blend-mode:plus-lighter}}@keyframes astroSlideFromRight{0%{transform:translate(100%)}}@keyframes astroSlideFromLeft{0%{transform:translate(-100%)}}@keyframes astroSlideToRight{to{transform:translate(100%)}}@keyframes astroSlideToLeft{to{transform:translate(-100%)}}@media (prefers-reduced-motion){::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}[data-astro-transition-scope]{animation:none!important}}
+</style><style>[data-astro-transition-scope="astro-yb6n2ciq-1"] { view-transition-name: optimizing-qwen-2-5-0-5b-inference-on-nvidia-gpus_3a-beating-hugging-face-with-bare-metal-cuda; }@layer astro { ::view-transition-old(optimizing-qwen-2-5-0-5b-inference-on-nvidia-gpus_3a-beating-hugging-face-with-bare-metal-cuda) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(optimizing-qwen-2-5-0-5b-inference-on-nvidia-gpus_3a-beating-hugging-face-with-bare-metal-cuda) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(optimizing-qwen-2-5-0-5b-inference-on-nvidia-gpus_3a-beating-hugging-face-with-bare-metal-cuda) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(optimizing-qwen-2-5-0-5b-inference-on-nvidia-gpus_3a-beating-hugging-face-with-bare-metal-cuda) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-yb6n2ciq-1"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-yb6n2ciq-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-yb6n2ciq-1"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-yb6n2ciq-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-yb6n2ciq-1"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-yb6n2ciq-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-yb6n2ciq-1"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-yb6n2ciq-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style>
+  <!-- Google Fonts & KaTeX for pristine typography and math -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '\\[', right: '\\]', display: true}, {left: '$', right: '$', display: false}, {left: '\\(', right: '\\)', display: false}]});"></script>
+  <style>
+    :root {
+      --background: #fdfdfd !important;
+      --foreground: #111111 !important;
+      --accent: #1f53a3 !important;
+      --font-pt-serif: 'PT Serif', Georgia, serif;
+      --font-google-sans-code: 'JetBrains Mono', monospace;
+    }
+    body {
+      background-color: #fdfdfd !important;
+      color: #111111 !important;
+      font-family: var(--font-pt-serif), Georgia, serif !important;
+    }
+    /* Ensure clean typography matching original paper */
+    .app-prose {
+      max-width: 68ch !important;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .app-prose table {
+      width: 100% !important;
+      margin: 1.5rem 0;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .app-prose th, .app-prose td {
+      border: 1px solid #e5e7eb;
+      padding: 0.6rem 0.8rem;
+    }
+    .app-prose th {
+      background-color: #f9fafb;
+      font-weight: 600;
+    }
+    .app-prose tr:nth-child(even) td {
+      background-color: #fafafa;
+    }
+    .app-prose img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 1.75rem auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+    }
+    .img-caption {
+      font-size: 0.85rem;
+      color: #6b7280;
+      text-align: center;
+      margin-top: -1rem;
+      margin-bottom: 1.75rem;
+      font-style: italic;
+    }
+    blockquote {
+      border-left: 4px solid #d1d5db !important;
+      padding-left: 1rem !important;
+      margin: 1.5rem 0 !important;
+      color: #374151 !important;
+      font-style: italic !important;
+    }
+    pre {
+      background-color: #1e1e1e !important;
+      color: #d4d4d4 !important;
+      padding: 1rem !important;
+      border-radius: 6px !important;
+      overflow-x: auto !important;
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 0.85rem !important;
+      line-height: 1.5 !important;
+    }
+    pre code {
+      color: inherit !important;
+      background: none !important;
+      border: none !important;
+      padding: 0 !important;
+    }
+    code:not(pre code) {
+      background-color: #f3f4f6;
+      color: #1f53a3;
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.875em;
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
 
-To eliminate these bottlenecks, we built **QUIC (Qwen Unified Inference on CUDA)**—a bare-metal CUDA serving engine for **Qwen 2.5 0.5B** from scratch, and benchmarked it head-to-head against Hugging Face FP16 eager mode on an **NVIDIA H100 80GB HBM3 GPU**.
+</head> <body>  [ <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 rtl:rotate-180"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg>Amr Gamal ](/)<script type="module">function e(){const t=document.querySelector("#back-button");t&&(t.href="/")}document.addEventListener("astro:page-load",e);e();</script>  #  Optimizing Qwen 2.5 0.5B Inference on NVIDIA GPUs: Beating Hugging Face with Bare-Metal CUDA 
 
-QUIC pairs hand-written CUDA workhorses (fused RMSNorm, RoPE, SwiGLU, and Split-K GQA decode attention) with cuBLASLt GEMMs, an iteration-level **continuous batching scheduler**, and a custom **from-scratch AWQ W4A16 quantization pipeline** that outperformed the official AutoAWQ library on academic benchmarks. The result? QUIC delivers **2.44x to 2.62x higher decode throughput** (reaching up to **1,876 tokens per second**) while cutting prompt TTFT significantly and matching Hugging Face with **100% word-for-word numerical parity**.
+    Nov 2026  |    **TL;DR**
 
-  
-    
+The code, kernels, and benchmarks are open-source on GitHub at [CaptainLevi04/quic.cu](https://github.com/CaptainLevi04/quic.cu). The pre-quantized 4-bit model checkpoint is published on Hugging Face at [Amr04/Qwen2.5-0.5B-AWQ-W4A16](https://huggingface.co/Amr04/Qwen2.5-0.5B-AWQ-W4A16-tied-embed-asym-hq128).
 
-![NVIDIA H100 Raw Model Benchmark](images/nvidia-h100-quic-vs-huggingface-latency-throughput.png)
-*NVIDIA H100: QUIC Custom Kernels vs Hugging Face FP16 Latency & Throughput*
+After spending time writing isolated CUDA kernels, I wanted to understand what actually happens when you chain everything together into a real LLM inference engine. Hugging Face eager execution is great for prototyping, but when you open a profiler trace on a modern GPU, you see thousands of micro-kernel launches, huge memory thrashing, and massive idle bubbles.
 
-  
-  
-    
+So I built QUIC, a bare-metal CUDA serving engine for Qwen 2.5 0.5B from scratch, and benchmarked it head-to-head against Hugging Face on an NVIDIA H100 GPU.
 
-![NVIDIA H100 Quantization and Batching Benchmark](images/nvidia-h100-awq-marlin-quantization-continuous-batching.png)
-*NVIDIA H100: W4A16 Marlin vs FP16 and Continuous vs Static Scheduling*
+The result is a clean C++ and CUDA runtime with hand-written fused kernels for RMSNorm, RoPE, SwiGLU, and Split-K GQA decode attention, wrapped with cuBLASLt GEMMs, native 4-bit AWQ Marlin quantization, and an iteration-level continuous batching scheduler. It consistently beats Hugging Face FP16 by **2.44x to 2.62x higher decode throughput**, reaching up to **1,876 tokens per second**, while also cutting prompt TTFT significantly.
 
-  
+The more interesting findings came when measuring the real bottlenecks:
 
-> [!NOTE] **Hardware & Setup Environment**
-> All empirical benchmarks were executed on an **NVIDIA H100 80GB HBM3 GPU** (3.35 TB/s memory bandwidth, 132 SMs) via Modal cloud compute, sweeping across batch sizes from 1 to 16 and context lengths from 128 to 2048 tokens.
->
+First, **quantization behaves counter-intuitively on small models**. On a 70B model, 4-bit weights make decode fly. On Qwen 2.5 0.5B, packing weights with AWQ cuts peak VRAM in half from 1,548 MB down to 780 MB, but the ALU overhead of unpacking 4-bit integers on the fly slightly offsets memory bandwidth gains. It is a capacity win for fitting longer contexts, not a latency cheat code.
 
-  
-### 📑 Table of Contents
+Second, **attention on big GPUs starves without Split-K**. An H100 has 132 SMs, but Qwen 2.5 0.5B only has 14 query heads. At batch size 1, standard FlashAttention launches only 14 thread blocks, leaving 118 SMs completely dead. Slicing historical context into 64-token chunks wakes up the entire GPU during decode.
 
-  1. [1. Why Build an LLM Engine from Scratch?](#why-build-an-llm-engine-from-scratch)
-2. [2. Why Qwen 2.5 0.5B?](#why-qwen-25-05b)
-3. [3. The Targets and Metrics](#the-targets-and-metrics)
-4. [4. Profiling Hugging Face Eager Mode](#profiling-hugging-face-eager-mode)
-5. [5. Qwen 2.5 Architecture & Memory Graph](#qwen-25-architecture-and-the-bare-metal-graph)
-6. [6. Writing the Core CUDA Workhorses](#writing-the-core-cuda-workhorses)
-7. [7. Attention Frontier: Prefill vs Split-K Decode](#the-attention-frontier-prefill-vs-decode)
-8. [8. Quantization: Math, AWQ & W4A16 Kernels](#quantization-deep-dive)
-9. [9. Serving: Dynamic KV-Cache & Continuous Batching](#system-level-serving-dynamic-kv-cache-and-continuous-batching)
-10. [10. End-to-End Benchmarks & Strict Parity](#end-to-end-benchmarks-profiler-deep-dive-and-accuracy-parity)
-11. [11. Team Contributions & Citation](#team-credits-and-acknowledgements)
+Third, **continuous batching delivers free performance**. Scheduling requests at the token iteration level rather than the request level gave a **+15.7 percent serving throughput boost** on identical hardware without touching a single CUDA instruction.
 
-<hr class="my-8 border-border" />
+And during verification, **QUIC achieves 100 percent word-for-word identity with Hugging Face** across 100 generated tokens on open-ended prompts, proving you do not have to sacrifice numerical accuracy for speed.
+
+<p>
+
+![NVIDIA H100 Raw Model Benchmark: QUIC Custom CUDA Kernels vs Hugging Face FP16 Decode Throughput and TTFT Latency](images/nvidia-h100-quic-vs-huggingface-latency-throughput.png)
+*NVIDIA H100 Raw Model Benchmark: QUIC Custom CUDA Kernels vs Hugging Face FP16 Decode Throughput and TTFT Latency*
+
+</p>
+<p>
+
+![NVIDIA H100 Quantization and Batching Benchmark: W4A16 Marlin vs FP16 and Continuous vs Static Scheduling](images/nvidia-h100-awq-marlin-quantization-continuous-batching.png)
+*NVIDIA H100 Quantization and Batching Benchmark: W4A16 Marlin vs FP16 and Continuous vs Static Scheduling*
+
+</p>
+**Note:** All benchmarks were run on an NVIDIA H100 80GB HBM3 GPU via Modal, sweeping across batch sizes 1, 4, 16 and context lengths from 128 to 2048 tokens.
+
+<blockquote>
+Feel free to reach out if you want to build together. My contact info is right at the bottom of this page.
+
+</blockquote>
+**Blog Map**
+
+1. [Why Build an LLM Engine from Scratch?](#why-build-an-llm-engine-from-scratch)
+2. [Profiling Hugging Face Eager Mode](#profiling-hugging-face-eager-mode)
+3. [Qwen 2.5 Architecture and the Bare-Metal Graph](#qwen-25-architecture-and-the-bare-metal-graph)
+4. [Writing the Core CUDA Workhorses](#writing-the-core-cuda-workhorses)
+5. [The Attention Frontier: Prefill vs Decode](#the-attention-frontier-prefill-vs-decode)
+6. [Quantization: The 0.5B Reality Check](#quantization-the-05b-reality-check)
+7. [System-Level Serving: Dynamic KV-Cache and Continuous Batching](#system-level-serving-dynamic-kv-cache-and-continuous-batching)
+8. [End-to-End Benchmarks, Profiler Deep-Dive, and Accuracy Parity](#end-to-end-benchmarks-profiler-deep-dive-and-accuracy-parity)
+
+<hr>
 
 ---
 
@@ -883,136 +1034,118 @@ By slicing the K dimension across SMs and skipping padding tokens at the hardwar
 
 ## Quantization: From Mathematical Foundations to Native W4A16 Execution
 
-Quantization sounds like an effortless free lunch on paper: compress your 16-bit floating-point weights down to 4-bit integers, get a 4x smaller model, eliminate 75% of your DRAM memory traffic, and watch your serving engine double its tokens-per-second throughput. But when you move beyond toy demonstrations and actually implement an end-to-end LLM quantizer and execution engine from scratch, you encounter a deep web of mathematical trade-offs, hardware arithmetic realities, and architectural bottlenecks that textbooks rarely discuss.
+Quantization sounds like a free lunch on paper: compress your weights from 16-bit floats down to 4-bit integers, get a 4x smaller model, cut memory traffic by 75%, and watch your engine run twice as fast. When I started testing this, first on my local GTX 1650 and later on an H100, I expected an instant doubling in speed. Instead, I hit the exact trap that catches almost everyone experimenting with quantized LLMs.
 
-In this section, we take a deep, uncompromising dive into how quantization actually works under the hood: from the core mathematical mechanics of linear mapping, zero-point constraints, and scale observers, to the theoretical breakthrough of **Activation-Aware Weight Quantization (AWQ)**, our from-scratch quantizer implementation that **outperformed the official AutoAWQ library** on academic benchmarks, and the low-level CUDA kernels (Marlin and Machete) that execute packed 4-bit GEMM on modern NVIDIA GPUs.
+In this section, we take a deep dive into the engineering and mathematical realities of post-training quantization: from linear mapping constraints and zero-point padding safety, to the theoretical breakthrough of **Activation-Aware Weight Quantization (AWQ)**, our from-scratch quantizer that outperformed the official AutoAWQ library on academic benchmarks, and the low-level CUDA kernels (Marlin and Machete) that execute packed 4-bit GEMM on modern NVIDIA GPUs.
 
-### 1. Demystifying Quantization: Storage Representation vs Hardware Arithmetic
+### 1. Demystifying Quantization: Representation vs Hardware Arithmetic
 
-A widespread misconception among practitioners is that quantization simply means *"converting weights into integers so the GPU does integer math instead of floating-point math."* While it is true that integer arithmetic is computationally cheaper at the transistor level—a standard 2's complement integer addition with carry executes in a single clock cycle, whereas IEEE 754 floating-point operations require 4 to 8 cycles to align exponents, normalize mantissas, and round—this is **not** how post-training quantization is deployed in modern autoregressive LLM serving.
+A common misconception is that quantization simply means *"representing weights in integers instead of floats to do integer math."* While integer operations are computationally simpler at the transistor level—a standard 2's complement integer addition with carry executes in a single clock cycle, whereas IEEE 754 floating-point operations require 4 to 8 cycles for exponent alignment and mantissa normalization—this is not how post-training quantization operates in modern LLM serving.
 
-In state-of-the-art LLM pipelines, weights are quantized to lower precision (typically INT4 or INT8) primarily as a **storage and memory bandwidth compression format**. The quantized 4-bit integer values themselves have no direct semantic meaning to the neural network; they are discrete indices mapped onto a continuous mathematical grid. During inference, we have two fundamental execution paradigms:
+In state-of-the-art serving systems, weights are quantized to lower precision (such as INT4) primarily as a **storage and memory bandwidth compression format**. The packed 4-bit integers themselves have no direct semantic meaning to the model; they are indices mapped onto a continuous mathematical grid. During inference, we encounter two distinct paradigms:
 
-1. **W4A16 (Weight-Only Quantization):** Weights are stored in VRAM as packed 4-bit integers. As they are streamed across the memory bus into GPU registers, a specialized CUDA kernel dynamically dequantizes them back into 16-bit floating-point values on the fly. The matrix multiplication itself ($Y = W \cdot X$) is executed entirely in FP16/BF16 arithmetic on the Tensor Cores. The activations ($X$) remain in native 16-bit precision throughout the entire forward pass, introducing zero activation quantization error.
-2. **W4A4 / W8A8 (Weight-and-Activation Quantization):** Both weights and dynamic activations are quantized into low-precision integers. Matrix multiplications are executed directly on dedicated hardware integer Tensor Cores (such as DP4A or INT4 tensor instructions). While this delivers massive arithmetic compute acceleration at high batch sizes, it introduces significant activation quantization error and requires runtime overhead to compute activation scales on the fly.
+  - **W4A16 (Weight-Only Quantization):** Weights reside in GPU VRAM as packed 4-bit integers. As they are loaded across the memory bus into registers, a specialized CUDA kernel dynamically dequantizes them back to 16-bit floats on the fly. The matrix multiplication itself ($Y = W \cdot X$) is executed entirely in FP16/BF16 arithmetic on Tensor Cores. The activations ($X$) remain in full 16-bit precision throughout the forward pass, incurring zero activation quantization error.
 
-Because single-stream and small-batch LLM decoding is overwhelmingly **memory-bandwidth bound** (as proven in our earlier roofline analysis), **W4A16 is the undisputed sweet spot**: it slashes weight memory traffic by up to 75% without incurring the severe accuracy degradation of quantizing dynamic activations.
+  - **W4A4 / W8A8 (Weight-and-Activation Quantization):** Both weights and dynamic activations are quantized into integers. Computations occur directly on dedicated hardware integer Tensor Cores (such as DP4A). While this offers substantial compute acceleration at high batch sizes, it introduces significant activation quantization noise and requires runtime overhead to compute activation scales on the fly.
+
+Because single-stream and small-batch decoding is strictly **memory-bandwidth bound** (loading weights from DRAM dominates total execution time), **W4A16 is the optimal sweet spot**: it slashes weight memory traffic by up to 75% without the severe accuracy loss of quantizing dynamic activations.
 
 ### 2. Mathematical Formulation: Symmetric vs Asymmetric Mapping
 
-At its mathematical core, uniform linear quantization maps continuous high-precision floating-point values $w \in \mathbb{R}$ to discrete lower-precision integer bins $q \in \mathbb{Z}$ via a scaling factor $S \in \mathbb{R}^+$ and an optional zero-point offset $z \in \mathbb{Z}$:
+Uniform linear quantization maps continuous high-precision floating-point values $w \in \mathbb{R}$ to discrete lower-precision integer bins $q \in \mathbb{Z}$ using a scale factor $S \in \mathbb{R}^+$ and an optional zero-point offset $z \in \mathbb{Z}$:
 
-$$
- q = 	ext{clamp}\left(\left\lfloor rac{w}{S} 
+<p>$$q = 	ext{clamp}\left(\left\lfloor rac{w}{S} 
 ight
 ceil + z, \; q_{\min}, \; q_{\max}
-ight) 
-$$
+ight)$$</p>
 
 To reconstruct the estimated floating-point value $\hat{w} pprox w$ during inference dequantization, we apply the inverse mapping:
 
-$$
- \hat{w} = S \cdot (q - z) 
-$$
-
-The choice of mapping configuration dictates both numerical expressiveness and low-level kernel performance:
+$$\hat{w} = S \cdot (q - z)$$
 
 #### A. Symmetric Mapping ($z = 0$)
 
-In symmetric quantization, the zero-point is strictly constrained to zero ($z = 0$). The floating-point range is centered symmetrically around zero, typically mapping $[-a, a] 	o [-2^{b-1}+1, \; 2^{b-1}-1]$ (for signed INT4, this is $[-7, 7]$ or $[-8, 7]$). While restricting the grid to $[-7, 7]$ leaves one of the 16 possible INT4 values unused, it provides an enormous architectural advantage in CUDA kernels: **all zero-point cross-terms vanish completely**.
+In symmetric quantization, the zero-point is fixed to zero ($z = 0$). The range is centered symmetrically around zero, mapping $[-a, a] 	o [-2^{b-1}+1, \; 2^{b-1}-1]$ (for signed INT4, typically $[-7, 7]$). While leaving one of the 16 possible values unused, it provides an enormous architectural benefit in CUDA kernels: **all zero-point cross-terms vanish completely**.
 
-When computing matrix-vector products $Y = \hat{W} X = S(Q - z)X$, having $z = 0$ simplifies the expression to $Y = S \cdot (Q X)$. The hardware does not need to accumulate extra subtraction terms for $z$ across the inner reduction loop, saving precious ALU cycles, register pressure, and shared memory bandwidth.
+When calculating matrix-vector products $Y = \hat{W} X = S(Q - z)X$, setting $z = 0$ simplifies the expression to $Y = S \cdot (Q X)$. The GPU avoids accumulating extra subtraction terms across the inner reduction loop, saving ALU cycles and register pressure.
 
 <h4>B. Asymmetric Mapping ($z 
 eq 0$)</h4>
-In asymmetric quantization, the scale $S$ and zero-point $z$ are computed to cover an arbitrary real range $[w_{\min}, w_{\max}]$:
+In asymmetric quantization, the scale $S$ and zero-point $z$ span an arbitrary real range $[w_{\min}, w_{\max}]$:
 
-$$
- S = rac{w_{\max} - w_{\min}}{2^b - 1}, \quad z = 	ext{round}\left(-rac{w_{\min}}{S}
-ight) + q_{\min} 
-$$
+<p>$$S = rac{w_{\max} - w_{\min}}{2^b - 1}, \quad z = 	ext{round}\left(-rac{w_{\min}}{S}
+ight) + q_{\min}$$</p>
 
-Asymmetric mapping utilizes all $2^b$ discrete bins (0 to 15 for unsigned INT4), making it substantially more accurate for weight distributions that are skewed or biased away from zero.
+Asymmetric mapping utilizes all 16 discrete bins (0 to 15 for unsigned INT4), providing higher fidelity for skewed or biased weight distributions.
 
-> [!NOTE] **The Sacred Zero-Point Rule in LLMs**
-> Even if an asymmetric weight tensor spans strictly positive values (e.g., from $+20.0$ to $+80.0$), the quantization range **must be artificially extended to include $0.0$** (i.e., mapping $[0.0, 80.0]$). Why? Because $0.0$ in full precision **must map to an exact integer with zero residual error**.
-> 
-  In modern autoregressive transformers, sequence padding, attention masking, and KV-cache initializations rely universally on exact zeros. If $0.0$ suffers even a fractional rounding error after dequantization, padding tokens cease to be neutral zeros and inject spurious semantic activations into every attention layer, triggering catastrophic numerical drift across the 24 transformer blocks!
->
+<blockquote>
+  **The Sacred Zero-Point Rule in LLMs:** Even if weight values span strictly positive numbers (e.g., from $+20.0$ to $+80.0$), the quantization range **must be artificially extended to include $0.0$** (mapping $[0.0, 80.0]$). Why? Because $0.0$ in full precision **must map to an exact integer with zero residual error**.
+
+  In modern autoregressive transformers, sequence padding and KV-cache initializations rely universally on exact zeros. If $0.0$ incurs even a fractional rounding error after dequantization, padding tokens cease to be neutral zeros and inject artificial semantic activations into every attention layer, triggering catastrophic numerical drift across the 24 transformer blocks.
+
+</blockquote>
 
 #### The Range vs Precision Trade-off
 
-Total quantization error stems from two competing phenomena: **clipping error** and **rounding error**.
+Total quantization error stems from two competing forces: **clipping error** and **rounding error**.
 
-  - **Increasing the scale $S$:** Expands the dynamic range, preventing large outlier weights from being clipped at $q_{\min}$ or $q_{\max}$. However, it stretches the distance between consecutive quantization steps, increasing the average rounding error for normal weights.
+  - **Increasing the scale $S$:** Expands the dynamic range, preventing large outlier weights from being clipped at $q_{\min}$ or $q_{\max}$. However, it stretches the distance between quantization levels, increasing average rounding error.
 
-  - **Decreasing the scale $S$:** Compresses the quantization step size, providing finer resolution and minimal rounding error for 99% of the distribution. However, any weight beyond the boundaries is aggressively clipped, introducing severe distortion.
+  - **Decreasing the scale $S$:** Compresses the quantization step size, yielding finer resolution and minimal rounding error for 99% of normal weights. However, any weight beyond the boundaries is harshly clipped.
 
 ### 3. Calibrating the Scale Factor $S$: Min-Max vs MSE Observer
 
-The scale factor $S$ is the single most critical parameter in the quantization process. How we select $S$ determines the boundary between a pristine 4-bit model and complete linguistic collapse:
+The scale factor $S$ is the most decisive parameter in quantization:
 
-1. **Min-Max Observer:** Sets $w_{\min}$ and $w_{\max}$ directly to the absolute minimum and maximum values in the tensor. While trivial to compute, it is notoriously vulnerable to outliers. If 99.9% of weights in a layer lie tightly inside $(-2.0, +1.0)$ but a single outlier spikes at $+5.0$, the entire 16-bin INT4 grid is stretched across $(-2.0, +5.0)$. Over 60% of the discrete representation capacity is completely wasted on empty space!
+1. **Min-Max Observer:** Sets bounds directly from the absolute minimum and maximum values in the tensor. While trivial, it is highly sensitive to outliers. If 99.9% of weights in a layer lie tightly inside $(-2.0, +1.0)$ but a single outlier spikes at $+5.0$, the entire 16-bin INT4 grid is stretched across $(-2.0, +5.0)$. Over 60% of representation capacity is completely wasted on empty space.
 2. **MSE Observer (Our Implementation Choice):** Rather than naively accepting extreme outliers, we determine $S$ by minimizing the Mean Squared Error (MSE) between the original high-precision tensor and its reconstructed counterpart:
-    
-$$
- S^* = rg\min_{S} \; \mathbb{E}\left[ \|W - \hat{W}(S)\|_2^2 
-ight] 
-$$
+    $$S^* = rg\min_{S} \; \mathbb{E}\left[ \|W - \hat{W}(S)\|_2^2 
+ight]$$
+    We implement this via an iterative grid search: starting from the global Min-Max bounds, we iteratively shrink the dynamic range (contracting by 1% steps over 100 iterations), perform fake-quantization on calibration tensors, and evaluate the resulting MSE. The threshold yielding the minimum reconstruction loss is selected. This mathematical contraction discards benign tail outliers to grant dramatically higher resolution to the dense central mass of weights.
+3. **Output (Logit) Observer (GPTQ style):** Minimizes output activation error $\|Y - \hat{Y}\|_2^2$ across inverse Hessian matrices. While effective for domain-specific models, it acts greedily on the calibration dataset and poses substantial risks of task-specific overfitting.
 
-    We implement this via an iterative grid search: starting from the global Min-Max bounds, we iteratively shrink the dynamic range (e.g., contracting by 1% steps over 100 iterations), perform fake-quantization on calibration tensors, and evaluate the resulting MSE. The threshold yielding the minimum reconstruction loss is selected. This mathematical contraction discards benign tail outliers to grant dramatically higher resolution to the dense central mass of weights.
-3. **Output (Logit) Observer (GPTQ style):** Instead of tracking weight error $(W - \hat{W})$, this approach minimizes the perturbation on the layer's output activations: $\min \|Y - \hat{Y}\|_2^2 = \|W X - \hat{W} X\|_2^2$. While theoretically attractive, it acts greedily on the calibration dataset and is highly susceptible to domain overfitting, causing the model to lose generality on diverse downstream tasks.
+### 4. Activation-Aware Weight Quantization (AWQ): Protecting Salient Weights
 
-### 4. Activation-Aware Weight Quantization (AWQ): The Core Breakthrough
+Traditional quantization schemes treat all weights within a matrix uniformly. However, research in **AWQ (Activation-aware Weight Quantization)** demonstrated an essential empirical property: **protecting just 0.1% to 1% of salient weight channels from quantization error preserves virtually the entire generative perplexity of the base model!**
 
-Traditional quantization schemes treat all weights within a matrix uniformly. However, pioneering research in **AWQ (Activation-aware Weight Quantization)** demonstrated an astonishing empirical property: **protecting just 0.1% to 1% of salient weight channels from quantization error preserves virtually the entire generative perplexity of the base model!**
-
-In baseline Round-to-Nearest (RTN) quantization without protection, Qwen's perplexity degraded sharply to **23.54**. Leaving a mere 1% of salient channels unquantized immediately brought perplexity down to **11.39**—indistinguishable from unquantized FP16.
+In baseline Round-to-Nearest (RTN) quantization without protection, Qwen's perplexity degraded sharply to **23.54**. Leaving a mere 1% of salient channels unquantized brought perplexity down to **11.39**—indistinguishable from unquantized FP16.
 
 #### Why Are Certain Weights More Important?
 
-Consider the linear transformation $Y = W \cdot X$. In weight-only quantization, the output error $\Delta Y$ is given by:
+Consider the linear transformation $Y = W \cdot X$. In weight-only quantization, the output error $\Delta Y$ is:
 
-$$
- \Delta Y = \Delta W \cdot X = (W - \hat{W}) \cdot X 
-$$
+$$\Delta Y = \Delta W \cdot X = (W - \hat{W}) \cdot X$$
 
-The output error is the product of the weight quantization error $\Delta W$ and the **magnitude of the incoming activation $X$**. Even if a weight has a tiny quantization error $\Delta W$, if it is multiplied by an activation channel with huge magnitude ($|X| \gg 1$), that error is amplified into a massive output perturbation! Conversely, large quantization errors on channels where activations are near zero have virtually no impact on the generated logits.
+The output error is the product of weight quantization error $\Delta W$ and the **magnitude of the incoming activation $X$**. Even if a weight has a tiny quantization error $\Delta W$, if it is multiplied by an activation channel with large magnitude ($|X| \gg 1$), that error is amplified into a massive output perturbation! Conversely, large quantization errors on channels where activations are near zero have negligible impact on generated logits.
 
-Therefore, **salient weights are simply the weights that interact with large activation channels**. We identify these channels by passing calibration sequences from a general corpus (such as Pile or C4) through the model and profiling average activation magnitudes per channel.
+Therefore, **salient weights are simply the weights that interact with large activation channels**. We identify these channels by passing calibration sequences from a general corpus through the model and profiling average activation magnitudes per channel.
 
 #### Per-Channel Protection via Equivalent Scaling
 
-Instead of keeping salient weights in mixed precision (which creates massive memory layout fragmentation and destroys CUDA SIMD parallelism), AWQ applies an **equivalent mathematical transformation**. We multiply the weight matrix by a per-channel scaling diagonal matrix $s$ and divide the activations by the exact same factor:
+Instead of keeping salient weights in mixed precision (which causes memory layout fragmentation and destroys CUDA SIMD parallelism), AWQ applies an **equivalent mathematical transformation**. We multiply the weight matrix by a per-channel scaling diagonal matrix $s$ and divide activations by the exact same factor:
 
-$$
- Y = W X = (W \cdot 	ext{diag}(s)) \cdot (	ext{diag}(s)^{-1} X) 
-$$
+$$Y = W X = (W \cdot 	ext{diag}(s)) \cdot (	ext{diag}(s)^{-1} X)$$
 
 This formulation produces two coordinated benefits:
 
-1. **Weight Scaling:** Multiplying salient weight channels by $s > 1$ pushes their magnitudes higher relative to the quantization grid, dramatically reducing their relative discretization error.
-2. **Activation Attenuation:** Dividing activations by $s$ shrinks the error multiplier in $\Delta Y = \Delta W \cdot (X / s)$, suppressing the output deviation!
+1. **Weight Scaling:** Multiplying salient weight channels by $s > 1$ pushes their magnitudes higher relative to the quantization grid, reducing relative discretization error.
+2. **Activation Attenuation:** Dividing activations by $s$ shrinks the error multiplier in $\Delta Y = \Delta W \cdot (X / s)$, suppressing output deviation.
 
-#### The Zero-Overhead Hardware Execution Trick
+#### Zero-Overhead Hardware Execution via Normalization Folding
 
-How do we divide activations by $s$ during high-speed inference without adding an extra CUDA kernel launch and latency penalty? **We fold the scaling vector $s$ directly into the preceding layer normalization!**
+How do we divide activations by $s$ during high-speed inference without adding an extra CUDA kernel launch? **We fold the scaling vector $s$ directly into the preceding layer normalization!**
 
 In Qwen 2.5, every linear projection (QKV, Gate, Up) is preceded by an RMSNorm layer: $	ext{RMSNorm}(x) = rac{x}{	ext{RMS}(x)} \odot \gamma$. We simply reparameterize the RMSNorm weight vector $\gamma$ ahead of time:
 
-$$
- \gamma_{	ext{new}} = rac{\gamma_{	ext{old}}}{s} 
-$$
+$$\gamma_{	ext{new}} = rac{\gamma_{	ext{old}}}{s}$$
 
-During live GPU inference, the activation division happens *for free* inside the existing RMSNorm kernel. **Zero new kernels, zero memory roundtrips, and zero added latency!**
+During live GPU inference, activation division happens for free inside the existing RMSNorm kernel. **Zero new kernels, zero memory roundtrips, and zero added latency!**
 
 #### Grid Search Optimization for $s$
 
 To find the optimal scaling vector $s$, we define $s$ as a function of activation magnitudes $s_X$ and weight magnitudes $s_W$ parameterized by $lpha$:
 
-$$
- s = s_X^lpha / s_W^{1-lpha} 
-$$
+$$s = s_X^lpha / s_W^{1-lpha}$$
 
 We execute a 20-point grid search over $lpha \in [0, 1]$. For each candidate $lpha$, we fake-quantize the scaled weights and measure the output MSE of the transformer block. The candidate $lpha$ that yields the lowest output distortion is permanently baked into the model checkpoint.
 
@@ -1032,57 +1165,57 @@ Rather than simply running a generic third-party script, we engineered our compl
 
 To rigorously validate our implementation, we evaluated our quantized Qwen2.5-0.5B checkpoint against both the unquantized base model and the official AutoAWQ library across four standard LLM benchmarks: **MMLU** (general reasoning), **C-Eval** (multi-discipline knowledge), **IFEval** (instruction following), and **Perplexity at 1024 context**.
 
-  <table>
-    <thead>
-      <tr>
-        <th>Evaluation Setup</th>
-        <th>Model Size (MB)</th>
-        <th>Latency (ms)</th>
-        <th>MMLU (%)</th>
-        <th>C-Eval (%)</th>
-        <th>IFEval (%)</th>
-        <th>PPL @ 1024 (Lower is Better)</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>**Dense Base Model (BF16)**</td>
-        <td>942.30 MB</td>
-        <td>197.12 ms</td>
-        <td>39.65%</td>
-        <td>39.67%</td>
-        <td>24.12%</td>
-        <td>**16.01**</td>
-      </tr>
-      <tr>
-        <td>**Quantized with Official AWQ Library (G=128)**</td>
-        <td>437.20 MB</td>
-        <td>123.50 ms</td>
-        <td>29.93%</td>
-        <td>33.71%</td>
-        <td>20.14%</td>
-        <td>18.79</td>
-      </tr>
-      <tr class="highlight-row">
-        <td>**Quantized From Scratch (Our AWQ Engine, G=128)**</td>
-        <td>437.20 MB</td>
-        <td>123.50 ms</td>
-        <td>**32.05%**</td>
-        <td>**34.80%**</td>
-        <td>**21.14%**</td>
-        <td>**18.77**</td>
-      </tr>
-      <tr>
-        <td>**Quantized From Scratch (Our AWQ Engine, G=32)**</td>
-        <td>457.10 MB</td>
-        <td>136.30 ms</td>
-        <td>**35.12%**</td>
-        <td>**37.15%**</td>
-        <td>**21.14%**</td>
-        <td>**17.41**</td>
-      </tr>
-    </tbody>
-  </table>
+<table>
+  <thead>
+    <tr>
+      <th>Evaluation Setup</th>
+      <th>Model Size (MB)</th>
+      <th>Latency (ms)</th>
+      <th>MMLU (%)</th>
+      <th>C-Eval (%)</th>
+      <th>IFEval (%)</th>
+      <th>PPL @ 1024 (Lower is Better)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>**Dense Base Model (BF16)**</td>
+      <td>942.30 MB</td>
+      <td>197.12 ms</td>
+      <td>39.65%</td>
+      <td>39.67%</td>
+      <td>24.12%</td>
+      <td>**16.01**</td>
+    </tr>
+    <tr>
+      <td>**Quantized with Official AWQ Library (G=128)**</td>
+      <td>437.20 MB</td>
+      <td>123.50 ms</td>
+      <td>29.93%</td>
+      <td>33.71%</td>
+      <td>20.14%</td>
+      <td>18.79</td>
+    </tr>
+    <tr>
+      <td>**Quantized From Scratch (Our AWQ Engine, G=128)**</td>
+      <td>437.20 MB</td>
+      <td>123.50 ms</td>
+      <td>**32.05%**</td>
+      <td>**34.80%**</td>
+      <td>**21.14%**</td>
+      <td>**18.77**</td>
+    </tr>
+    <tr>
+      <td>**Quantized From Scratch (Our AWQ Engine, G=32)**</td>
+      <td>457.10 MB</td>
+      <td>136.30 ms</td>
+      <td>**35.12%**</td>
+      <td>**37.15%**</td>
+      <td>**21.14%**</td>
+      <td>**17.41**</td>
+    </tr>
+  </tbody>
+</table>
 
 The empirical data reveals a clear and decisive outcome: **Our custom-built quantization pipeline outperformed the official AWQ library across every single evaluation metric**:
 
@@ -1094,17 +1227,17 @@ The empirical data reveals a clear and decisive outcome: **Our custom-built quan
 
   - On **Perplexity**, our engine achieved **18.77 vs 18.79**.
 
-Furthermore, testing Group Size 32 demonstrated that tighter grouping pushes MMLU all the way to **35.12%** and Perplexity down to **17.41**, within striking distance of the uncompressed BF16 baseline while cutting latency from 197.1 ms to 136.3 ms!
-
-  
+Furthermore, testing Group Size 32 demonstrated that tighter grouping pushes MMLU all the way to **35.12%** and Perplexity down to **17.41**, within striking distance of the uncompressed BF16 baseline while cutting latency from 197.1 ms to 136.3 ms.
 
 ![Empirical Benchmark Comparison: Base Model vs Official AWQ Library vs Our Custom From-Scratch Quantizer](images/custom_quantizer_scratch_vs_official_awq.png)
-*Figure: Group Size = 128 benchmark comparison demonstrating our from-scratch implementation beating the official AWQ library across MMLU, C-Eval, and IFEval.*
+*Empirical Benchmark Comparison: Base Model vs Official AWQ Library vs Our Custom From-Scratch Quantizer*
 
-  
+Figure: Group Size = 128 benchmark comparison demonstrating our from-scratch implementation beating the official AWQ library across MMLU, C-Eval, and IFEval.
 
 ![Group Size 32 Evaluation Table](images/custom_awq_group32_benchmark_table.png)
-*Figure: Group Size = 32 benchmark results confirming tighter accuracy retention at the cost of a minor 20 MB metadata overhead.*
+*Group Size 32 Evaluation Table*
+
+Figure: Group Size = 32 benchmark results confirming tighter accuracy retention at the cost of a minor 20 MB metadata overhead.
 
 ### 7. The Embedding Matrix Dilemma: Why 0.5B Compresses by 50% Instead of 75%
 
@@ -1112,16 +1245,14 @@ When compressing a model with 4-bit weights, basic arithmetic suggests the check
 
 The answer lies in the **vocabulary embedding matrix (`embed_tokens`)**. Qwen 2.5 employs an expansive multilingual vocabulary of **151,936 tokens** with a hidden dimension of 896. In FP16, this single weight matrix consumes:
 
-$$
- 151,936 	imes 896 	imes 2 	ext{ bytes} pprox 272.3 	ext{ MB} 
-$$
+$$151,936 	imes 896 	imes 2 	ext{ bytes} pprox 272.3 	ext{ MB}$$
 
 In a small 494M parameter model, the embedding matrix alone represents **more than 27% of the entire model's parameters**! After quantizing all 24 transformer blocks down to 4-bit, the linear layers shrink to roughly 195 MB, while the embedding table remains unquantized in 16-bit at ~260 MB (tied between input embeddings and the LM head).
 
-  
-
 ![Storage Share by Precision for Qwen2.5-0.5B Quantized Model](images/qwen2_5_0_5b_quantized_storage_breakdown.png)
-*Figure: Storage breakdown of Qwen2.5-0.5B: unquantized 16-bit embeddings account for 61.5% of the total quantized model size!*
+*Storage Share by Precision for Qwen2.5-0.5B Quantized Model*
+
+Figure: Storage breakdown of Qwen2.5-0.5B: unquantized 16-bit embeddings account for 61.5% of the total quantized model size.
 
 #### Why Not Quantize Embeddings to 4-Bit?
 
@@ -1131,28 +1262,28 @@ The embedding table is the very first operator the input sees and the exact matr
 
 To verify our architectural hypothesis, we performed the identical storage analysis on **Qwen-1.5B**:
 
-  
-
 ![Storage Share by Precision for Qwen-1.5B Quantized Model](images/qwen2_1_5b_quantized_storage_breakdown.png)
-*Figure: Storage breakdown of Qwen-1.5B: quantized INT4 linear layers expand to 57.5%, driving overall size down to 33% of the original model.*
+*Storage Share by Precision for Qwen-1.5B Quantized Model*
 
-Because transformer depth and feed-forward intermediate dimensions scale quadratically while vocabulary size remains constant, the embedding matrix accounts for a rapidly shrinking fraction of total parameters as models grow. For 1.5B, the model compresses to **33%** of its original size; for 7B and 70B, it achieves the near-ideal **26% to 27%** footprint!
+Figure: Storage breakdown of Qwen-1.5B: quantized INT4 linear layers expand to 57.5%, driving overall size down to 33% of the original model.
+
+Because transformer depth and feed-forward intermediate dimensions scale quadratically while vocabulary size remains constant, the embedding matrix accounts for a rapidly shrinking fraction of total parameters as models grow. For 1.5B, the model compresses to **33%** of its original size; for 7B and 70B, it achieves the near-ideal **26% to 27%** footprint.
 
 ### 8. Escaping the CPU Dequantization Trap
 
 Once you have a pristine 4-bit checkpoint, the next hurdle is deployment. When I first wired our AWQ model into a naive PyTorch pipeline, I was greeted by a maddening result: **GPU memory usage remained at 1.5 GB (identical to FP16), and generation was actually slower!**
 
-  
-
 ![The CPU Dequantization Trap Diagram](images/cpu-dequantization-trap-memory-bottleneck.png)
-*Figure: The CPU Dequantization Trap: dequantizing weights in host RAM transfers bloated 16-bit matrices over PCIe, burning CPU cycles and nullifying GPU memory savings.*
+*The CPU Dequantization Trap Diagram*
+
+Figure: The CPU Dequantization Trap: dequantizing weights in host RAM transfers bloated 16-bit matrices over PCIe, burning CPU cycles and nullifying GPU memory savings.
 
 In standard high-level implementations, quantized weights are loaded from disk into CPU memory. The framework then immediately dequantizes them in CPU RAM back to FP16, and transfers bloated 16-bit matrices across the PCIe bus into GPU VRAM! You get zero memory savings on the GPU, zero bandwidth reduction across DRAM, and you waste CPU cycles doing point-wise float conversions.
 
-  
-
 ![Empirical VRAM comparison proving naive quantization fails](images/naive-awq-quantization-vram-empirical-proof.png)
-*Figure: Empirical proof: Across all context lengths, naive execution exhibits 100% identical VRAM usage to stock FP16.*
+*Empirical VRAM comparison proving naive quantization fails*
+
+Figure: Empirical proof: Across all context lengths, naive execution exhibits 100% identical VRAM usage to stock FP16.
 
 If weights do not stay packed as 4-bit integers all the way across the GPU memory bus into the SM registers, quantization is completely pointless.
 
@@ -1162,62 +1293,62 @@ To realize true hardware acceleration, weights must remain packed as 4-bit nibbl
 
 Look at the memory traffic savings during single-token ($M=1$) decode on an H100:
 
-  <table>
-    <thead>
-      <tr>
-        <th>Projection Layer</th>
-        <th>M</th>
-        <th>Latency</th>
-        <th>TFLOPS</th>
-        <th>FP16 Data</th>
-        <th>Bandwidth</th>
-        <th>INT4 Data</th>
-        <th>Traffic Reduction</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>`q_proj`</td>
-        <td>1</td>
-        <td>0.0134 ms</td>
-        <td>0.12</td>
-        <td>1.61 MB</td>
-        <td>120.3 GB/s</td>
-        <td>0.47 MB</td>
-        <td>**3.45x fewer bytes**</td>
-      </tr>
-      <tr>
-        <td>`k_proj`</td>
-        <td>1</td>
-        <td>0.0125 ms</td>
-        <td>0.02</td>
-        <td>0.23 MB</td>
-        <td>18.4 GB/s</td>
-        <td>0.07 MB</td>
-        <td>**3.45x fewer bytes**</td>
-      </tr>
-      <tr>
-        <td>`gate_proj`</td>
-        <td>1</td>
-        <td>0.0092 ms</td>
-        <td>0.94</td>
-        <td>8.72 MB</td>
-        <td>943.8 GB/s</td>
-        <td>2.52 MB</td>
-        <td>**3.46x fewer bytes**</td>
-      </tr>
-      <tr>
-        <td>`down_proj`</td>
-        <td>1</td>
-        <td>0.0117 ms</td>
-        <td>0.74</td>
-        <td>8.72 MB</td>
-        <td>743.9 GB/s</td>
-        <td>2.52 MB</td>
-        <td>**3.46x fewer bytes**</td>
-      </tr>
-    </tbody>
-  </table>
+<table>
+  <thead>
+    <tr>
+      <th>Projection Layer</th>
+      <th>M</th>
+      <th>Latency</th>
+      <th>TFLOPS</th>
+      <th>FP16 Data</th>
+      <th>Bandwidth</th>
+      <th>INT4 Data</th>
+      <th>Traffic Reduction</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>`q_proj`</td>
+      <td>1</td>
+      <td>0.0134 ms</td>
+      <td>0.12</td>
+      <td>1.61 MB</td>
+      <td>120.3 GB/s</td>
+      <td>0.47 MB</td>
+      <td>**3.45x fewer bytes**</td>
+    </tr>
+    <tr>
+      <td>`k_proj`</td>
+      <td>1</td>
+      <td>0.0125 ms</td>
+      <td>0.02</td>
+      <td>0.23 MB</td>
+      <td>18.4 GB/s</td>
+      <td>0.07 MB</td>
+      <td>**3.45x fewer bytes**</td>
+    </tr>
+    <tr>
+      <td>`gate_proj`</td>
+      <td>1</td>
+      <td>0.0092 ms</td>
+      <td>0.94</td>
+      <td>8.72 MB</td>
+      <td>943.8 GB/s</td>
+      <td>2.52 MB</td>
+      <td>**3.46x fewer bytes**</td>
+    </tr>
+    <tr>
+      <td>`down_proj`</td>
+      <td>1</td>
+      <td>0.0117 ms</td>
+      <td>0.74</td>
+      <td>8.72 MB</td>
+      <td>743.9 GB/s</td>
+      <td>2.52 MB</td>
+      <td>**3.46x fewer bytes**</td>
+    </tr>
+  </tbody>
+</table>
 
 For large feed-forward layers like `gate_proj` and `down_proj`, bytes transferred per decode step plummet from **8.72 MB down to 2.52 MB**—an instant **3.46x reduction in DRAM traffic**!
 
@@ -1225,7 +1356,7 @@ We integrated two specialized 4-bit execution backends into QUIC:
 
 #### A. Marlin Kernel (Turing, Ampere, Ada, Hopper)
 
-Marlin is an ultra-fast 4-bit GEMM kernel. In `src/quant/marlin.py`, we take our AWQ checkpoint and repack the weights into Marlin's proprietary **16x64 tile layout**. This interleaves weights and scale factors so a single 128-bit vector load instruction populates registers with zero shared memory bank conflicts. In `kernels/cuda/marlin.cu`, it executes asynchronous `mma.sync` Tensor Core instructions with instant on-the-fly dequantization.
+Marlin is an ultra-fast 4-bit GEMM kernel. In `src/quant/marlin.py`, we take our AWQ checkpoint and repack weights into Marlin's proprietary **16x64 tile layout**. This interleaves weights and scale factors so a single 128-bit vector load instruction populates registers with zero shared memory bank conflicts. In `kernels/cuda/marlin.cu`, it executes asynchronous `mma.sync` Tensor Core instructions with instant on-the-fly dequantization.
 
 #### B. Machete Kernel (NVIDIA Hopper sm_90a)
 
@@ -1235,50 +1366,50 @@ For NVIDIA Hopper GPUs, CUTLASS 3.x provides hardware-accelerated mixed-input ma
 
 With native W4A16 execution, peak VRAM allocated dropped from **996 MB down to 503 MB**—cutting GPU memory footprint in half! This allows serving double the concurrent batch size on memory-constrained GPUs. However, examining single-stream decode throughput reveals an unexpected phenomenon:
 
-  <table>
-    <thead>
-      <tr>
-        <th>Engine & Configuration</th>
-        <th>Batch</th>
-        <th>Context</th>
-        <th>Decode Throughput</th>
-        <th>Peak VRAM</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>**QUIC FP16**</td>
-        <td>1</td>
-        <td>128</td>
-        <td>**162.1 tok/s**</td>
-        <td>996 MB</td>
-      </tr>
-      <tr>
-        <td>**QUIC Quant (W4A16 Marlin)**</td>
-        <td>1</td>
-        <td>128</td>
-        <td>148.9 tok/s</td>
-        <td>**503 MB**</td>
-      </tr>
-      <tr>
-        <td>**Hugging Face FP16 Eager**</td>
-        <td>1</td>
-        <td>128</td>
-        <td>66.5 tok/s</td>
-        <td>1290 MB</td>
-      </tr>
-    </tbody>
-  </table>
+<table>
+  <thead>
+    <tr>
+      <th>Engine & Configuration</th>
+      <th>Batch</th>
+      <th>Context</th>
+      <th>Decode Throughput</th>
+      <th>Peak VRAM</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>**QUIC FP16**</td>
+      <td>1</td>
+      <td>128</td>
+      <td>**162.1 tok/s**</td>
+      <td>996 MB</td>
+    </tr>
+    <tr>
+      <td>**QUIC Quant (W4A16 Marlin)**</td>
+      <td>1</td>
+      <td>128</td>
+      <td>148.9 tok/s</td>
+      <td>**503 MB**</td>
+    </tr>
+    <tr>
+      <td>**Hugging Face FP16 Eager**</td>
+      <td>1</td>
+      <td>128</td>
+      <td>66.5 tok/s</td>
+      <td>1290 MB</td>
+    </tr>
+  </tbody>
+</table>
 
-While QUIC Quant still crushes Hugging Face by **2.24x**, it is slightly slower than our own bare-metal FP16 engine (148.9 vs 162.1 tok/s). Why does 4-bit quantization accelerate a 70B model by 3x, but slightly decelerate a 0.5B model at Batch 1?
+While QUIC Quant still outperforms Hugging Face by **2.24x**, it is slightly slower than our own bare-metal FP16 engine (148.9 vs 162.1 tok/s). Why does 4-bit quantization accelerate a 70B model by 3x, but slightly decelerate a 0.5B model at Batch 1?
 
 This highlights the fundamental difference between small and massive models:
 
   - **On a 70B parameter model:** Weight matrices are gargantuan ($8192 	imes 8192$). Moving bytes across the DRAM bus is the single overwhelming bottleneck; memory traffic completely saturates the bus. Cutting traffic by 4x instantly yields a massive 2x to 3x speedup.
 
-  - **On Qwen 2.5 0.5B:** The hidden dimension is only 896. Weight matrices are so tiny that the absolute time spent moving bytes is already negligible (fractions of a microsecond). In this regime, the **ALU instruction overhead required to unpack 4-bit nibbles, apply zero-point shifts, and multiply scales inside the CUDA registers** takes more time than the microsecond saved on the memory bus!
+  - **On Qwen 2.5 0.5B:** The hidden dimension is only 896. Weight matrices are so tiny that the absolute time spent moving bytes is already negligible. In this regime, the **ALU instruction overhead required to unpack 4-bit nibbles, apply zero-point shifts, and multiply scales inside the CUDA registers** takes more time than the microsecond saved on the memory bus!
 
-On small architectures like 0.5B, **quantization is primarily a VRAM capacity and concurrent throughput multiplier** (allowing massive batch sizes and extended context windows) rather than an isolated single-stream latency booster. Recognizing this distinction is what separates real systems engineering from naive benchmarking.
+On small architectures like 0.5B, **quantization is primarily a VRAM capacity and concurrent throughput multiplier** (allowing massive batch sizes and extended context windows) rather than an isolated single-stream latency booster.
 
 ---
 
@@ -1476,68 +1607,25 @@ Building an inference engine from bare metal teaches lessons you never grasp fro
 3. **Quantization behaves differently on small models:** On a 70B parameter model, 4-bit quantization yields massive throughput acceleration. On a 0.5B model, unpacking ALU overhead slightly offsets bandwidth gains, making it a VRAM capacity optimization rather than a pure latency booster.
 4. **Serving is about slot utilization:** Continuous batching proves that systems-level scheduling delivers a free 15 to 20 percent throughput boost without touching CUDA instructions.
 
-All code, CUDA kernels, tests, traces, and benchmark scripts are open-source at [github.com/CaptainLevi04/quic.cu](https://github.com/CaptainLevi04/quic.cu).
+All code, CUDA kernels, tests, traces, and benchmark scripts are open-source on GitHub at [CaptainLevi04/quic.cu](https://github.com/CaptainLevi04/quic.cu).
 
 Feel free to check out the repository, run the benchmarks yourself, and inspect the traces in Perfetto.
 
- 
-
----
-
-## Team Contributions & Project Acknowledgements
+### Team Contributions & Project Acknowledgements
 
 QUIC was built as an end-to-end graduation project by a dedicated team of engineers who divided responsibilities across architectural layers:
 
-  
-    
-      AG
-      
-        
-#### Amr Gamal
+  - **Amr Gamal ([@CaptainLevi04](https://github.com/CaptainLevi04)):** Project Lead & Quantization Architecture. Engineered the from-scratch AWQ Quantizer (outperforming AutoAWQ), released the Hugging Face model checkpoint, conducted embedding matrix storage & memory breakdown analyses, and directed evaluation sweeps.
 
-        [@CaptainLevi04](https://github.com/CaptainLevi04)
+  - **Hassan Dahroug ([@hdahroug](https://github.com/hdahroug)):** Custom CUDA Kernels. Authored the hand-written CUDA workhorses including vectorized RMSNorm, register-resident RoPE, fused SwiGLU, FlashAttention prefill, and Split-K GQA decode attention.
 
-      
-    
-    **Lead Architect & Quantization:** Designed the engine pipeline, built the custom AWQ Quantizer from scratch (outperforming AutoAWQ), released the official Hugging Face model, conducted memory breakdown & embedding matrix analysis, and led benchmarking.
-
-  
-
-  
-    
-      HD
-      
-        
-#### Hassan Dahroug
-
-        [@hdahroug](https://github.com/hdahroug)
-
-      
-    
-    **Custom CUDA Kernels:** Authored the hand-written CUDA workhorses including vectorized RMSNorm, register-resident RoPE, fused SwiGLU, FlashAttention prefill, and Split-K GQA decode attention.
-
-  
-
-  
-    
-      IE
-      
-        
-#### Islam Essam
-
-        [@IslamEssam01](https://github.com/IslamEssam01)
-
-      
-    
-    **Serving & Continuous Batching:** Developed the system-level serving architecture, dynamic KV-cache slot allocation, and the iteration-level continuous batching scheduler.
-
-  
+  - **Islam Essam ([@IslamEssam01](https://github.com/IslamEssam01)):** System-Level Serving. Developed the serving runtime, dynamic KV-cache slot allocation, and the iteration-level continuous batching scheduler.
 
 ### Citation
 
-If you find QUIC or our quantization research useful in your work, please cite:
+If you find QUIC or our quantization research useful, please cite:
 
-```bibtex
+```
 @software{quic2026,
   author    = {Gamal, Amr and Dahroug, Hassan and Essam, Islam},
   title     = {QUIC: Qwen Unified Inference on CUDA},
@@ -1545,3 +1633,68 @@ If you find QUIC or our quantization research useful in your work, please cite:
   url       = {https://github.com/CaptainLevi04/quic.cu}
 }
 ```
+
+ <hr class="my-8 border-dashed">  
+  Connect & Project Links:
+
+  
+    <a href="https://github.com/CaptainLevi04/quic.cu" title="Project Repository" class="group inline-flex items-center gap-1 hover:text-accent p-2 sm:p-1">
+      GitHub: CaptainLevi04/quic.cu
+    </a>
+    •
+    <a href="https://huggingface.co/Amr04/Qwen2.5-0.5B-AWQ-W4A16-tied-embed-asym-hq128" title="Hugging Face Model" class="group inline-flex items-center gap-1 hover:text-accent p-2 sm:p-1">
+      Hugging Face: Qwen2.5-0.5B-AWQ-W4A16
+    </a>
+    •
+    <a href="https://github.com/CaptainLevi04" title="Amr Gamal on GitHub" class="group inline-flex items-center gap-1 hover:text-accent p-2 sm:p-1">
+      Author: Amr Gamal
+    </a>
+  
+
+  <!-- Load full theme logic --> <script type="module">const s="theme",c="light",a="dark",i="light";function l(){const e=localStorage.getItem(s);return e||i}let t=window.theme?.themeValue??l();function r(){localStorage.setItem(s,t),o()}function o(){document.firstElementChild?.setAttribute("data-theme",t),document.querySelector("#theme-btn")?.setAttribute("aria-label",t);const e=document.body;if(e){const n=window.getComputedStyle(e).backgroundColor;document.querySelector("meta[name='theme-color']")?.setAttribute("content",n)}}window.theme?(window.theme.setPreference=r,window.theme.reflectPreference=o):window.theme={themeValue:t,setPreference:r,reflectPreference:o,getTheme:()=>t,setTheme:e=>{t=e}};o();function d(){o(),document.querySelector("#theme-btn")?.addEventListener("click",()=>{t=t===c?a:c,window.theme?.setTheme(t),r()})}d();document.addEventListener("astro:after-swap",d);document.addEventListener("astro:before-swap",e=>{const m=e,n=document.querySelector("meta[name='theme-color']")?.getAttribute("content");n&&m.newDocument.querySelector("meta[name='theme-color']")?.setAttribute("content",n)});window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",({matches:e})=>{t=e?a:c,window.theme?.setTheme(t),r()});</script> </body> </html> <script data-astro-rerun>
+  /** Create a progress indicator
+   *  at the top */
+  function createProgressBar() {
+    // Create the main container div
+    const progressContainer = document.createElement("div");
+    progressContainer.className =
+      "progress-container fixed top-0 z-10 h-1 w-full bg-background";
+
+    // Create the progress bar div
+    const progressBar = document.createElement("div");
+    progressBar.className = "progress-bar h-1 w-0 bg-accent";
+    progressBar.id = "myBar";
+
+    // Append the progress bar to the progress container
+    progressContainer.appendChild(progressBar);
+
+    // Append the progress container to the document body or any other desired parent element
+    document.body.appendChild(progressContainer);
+  }
+  createProgressBar();
+
+  /** Update the progress bar
+   *  when user scrolls */
+  function updateScrollProgress() {
+    document.addEventListener("scroll", () => {
+      const winScroll =
+        document.body.scrollTop || document.documentElement.scrollTop;
+      const height =
+        document.documentElement.scrollHeight -
+        document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      if (document) {
+        const myBar = document.getElementById("myBar");
+        if (myBar) {
+          myBar.style.width = scrolled + "%";
+        }
+      }
+    });
+  }
+  updateScrollProgress();
+
+  /* Go to page start after page swap */
+  document.addEventListener("astro:after-swap", () =>
+    window.scrollTo({ left: 0, top: 0, behavior: "instant" })
+  );
+</script>
